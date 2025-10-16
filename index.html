@@ -275,35 +275,23 @@
             
             document.getElementById('font-size-select').addEventListener('change', (e) => {
                 const sizeValue = e.target.value;
-                
-                // 1. Apply size to normal text using the old method
                 document.execCommand('fontSize', false, sizeValue);
-
-                // 2. Apply size to selected KaTeX elements
                 const newFontSize = fontSizeMap[sizeValue];
                 if (!newFontSize) return;
-
                 const selection = window.getSelection();
                 if (!selection.rangeCount || selection.isCollapsed) return;
-
                 const range = selection.getRangeAt(0);
                 const ancestor = range.commonAncestorContainer;
-                
                 const parentElement = ancestor.nodeType === Node.ELEMENT_NODE ? ancestor : ancestor.parentElement;
                 if (!parentElement) return;
-
                 const allKatexInAncestor = parentElement.querySelectorAll('.katex');
-
                 allKatexInAncestor.forEach(el => {
-                    // Check if the element is fully or partially within the user's selection
                     if (selection.containsNode(el, true)) {
                         el.style.fontSize = newFontSize;
                     }
                 });
-
                 editor.focus();
             });
-
 
             const docxInput = document.getElementById('docx-input');
             const imageInput = document.getElementById('image-input');
@@ -397,7 +385,15 @@
                 const selection = window.getSelection();
                 if (selection.rangeCount > 0) renderKatexInNode(selection.getRangeAt(0).startContainer);
             });
-            editor.addEventListener('paste', (e) => setTimeout(scanAndRenderAll, 50));
+            
+            // BUG FIX: Intercept paste event to strip formatting
+            editor.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+                setTimeout(scanAndRenderAll, 50); // Scan for LaTeX after pasting
+            });
+
             document.addEventListener('selectionchange', updateToolbar);
             
             const katexCheckInterval = setInterval(() => {
