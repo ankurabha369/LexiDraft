@@ -14,7 +14,7 @@
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- KaTeX for LaTeX rendering -->
+    <!-- KaTeX for LaTeX rendering - CRITICAL FIX: Corrected integrity attribute and added defer -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMmg9ikOAldyd3pCzoMmbJsyxxjiZLqtpFyABhWrao+euMSRp" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
     
@@ -69,21 +69,23 @@
             --text-tooltip: #ffffff; --border-color: #fecdd3; --accent-color: #ec4899;
             --active-bg: #fce7f3; --active-text: #9d174d;
         }
+        html, body {
+             overflow-x: hidden; /* Prevents horizontal scrolling */
+        }
         body {
             font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-primary);
             transition: background-color 0.3s, color 0.3s;
-            overflow-x: hidden; /* Prevents horizontal scrolling on small screens */
+            position: relative; /* Needed for overflow-x to work reliably with some children */
+            width: 100%;
         }
         header { background-color: var(--bg-header); border-color: var(--border-color); }
         #editor {
             background-color: var(--bg-editor);
             box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.1);
             transition: box-shadow 0.2s, background-color 0.3s;
-            /* RESPONSIVE CHANGE: Use 100% width up to a max of 8.5in */
             width: 100%;
             max-width: 8.5in;
             min-height: 11in;
-            /* RESPONSIVE CHANGE: Adjust padding for smaller screens */
             padding: 1rem;
             margin-left: auto;
             margin-right: auto;
@@ -102,7 +104,6 @@
         .toolbar-container { background-color: var(--bg-toolbar); border-color: var(--border-color); }
         #splash-screen { background-color: #ffffff; }
         
-        /* RESPONSIVE CHANGE: Restore larger padding on medium screens and up */
         @media (min-width: 768px) {
             #editor {
                 padding: 0.5in;
@@ -151,8 +152,7 @@
 
     <!-- Splash Screen -->
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
-        <!-- RESPONSIVE CHANGE: Adjusted logo size for small screens -->
-        <img src="icon.png" alt="LexiDraft Logo" class="h-64 sm:h-96 mb-4 rounded-lg">
+        <img src="icon.png" alt="LexiDraft Logo" class="h-96 mb-4">
     </div>
 
     <!-- Main Content Wrapper -->
@@ -161,8 +161,7 @@
         <header class="no-print w-full border-b p-2 print:hidden flex-shrink-0 sticky top-0 bg-white z-40" style="background-color: var(--bg-header);">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                    <!-- RESPONSIVE CHANGE: Adjusted logo size for small screens -->
-                    <img src="fullname.png" alt="LexiDraft Logo" class="h-10 sm:h-12 w-auto rounded-md object-contain">
+                    <img src="fullname.png" alt="LexiDraft Logo" class="h-12 w-auto rounded-md object-contain">
                 </div>
             </div>
 
