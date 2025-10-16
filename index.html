@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexiDraft Scientific Editor</title>
+    <link rel="icon" href="logo512.png" type="image/x-icon">
+    
+    <!-- Google Fonts: Inter, Lato, Merriweather, Roboto Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX for LaTeX rendering - CRITICAL FIX: Corrected integrity attribute -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMmg9ikOAldyd3pCzoMmbJsyxxjiZLqtpFyABhWrao+euMSRp" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    
+    <!-- Mammoth.js for DOCX import -->
+    <script src="https://unpkg.com/mammoth@1.5.1/mammoth.browser.min.js"></script>
+    
+    <style>
+        /* Add these new rules */
+            #font-select,
+            #font-size-select,
+            #format-block-select {
+                color: var(--text-primary);
+            }
+
+            #font-select option,
+            #font-size-select option,
+            #format-block-select option {
+                color: #1e293b; /* Dark text color for readability */
+                background-color: #FFFFFF; /* Light background for the dropdown */
+            }
+
+            /* ... existing styles ... */
+        :root {
+            --bg-page: #F1F5F9; --bg-header: #FFFFFF; --bg-editor: #FFFFFF; --bg-toolbar: #FFFFFF;
+            --bg-tooltip: #1e293b; --text-primary: #1e293b; --text-secondary: #64748b;
+            --text-tooltip: #FFFFFF; --border-color: #e2e8f0; --accent-color: #3b82f6;
+            --active-bg: #dbeafe; --active-text: #1d4ed8;
+            --theme-light-swatch: #F8FAFC; --theme-dark-swatch: #1E1E1E; 
+            --theme-green-swatch: #166534; --theme-blue-swatch: #1e40af; --theme-pink-swatch: #9d174d;
+        }
+        .theme-dark {
+            --bg-page: #121212; --bg-header: #1E1E1E; --bg-editor: #1E1E1E; --bg-toolbar: #282828;
+            --bg-tooltip: #E0E0E0; --text-primary: #E0E0E0; --text-secondary: #A0A0A0;
+            --text-tooltip: #121212; --border-color: #383838; --accent-color: #BB86FC;
+            --active-bg: #333333; --active-text: #BB86FC;
+        }
+        /* FIX: Added specific text color overrides for dark mode prose */
+        .theme-dark .prose { --tw-prose-body: var(--text-primary); --tw-prose-headings: var(--text-primary); --tw-prose-lead: var(--text-secondary); --tw-prose-links: var(--accent-color); --tw-prose-bold: var(--text-primary); --tw-prose-counters: var(--text-secondary); --tw-prose-bullets: var(--border-color); --tw-prose-hr: var(--border-color); --tw-prose-quotes: var(--text-primary); --tw-prose-quote-borders: var(--border-color); --tw-prose-captions: var(--text-secondary); --tw-prose-code: var(--text-primary); --tw-prose-pre-code: var(--text-primary); --tw-prose-pre-bg: #282828; --tw-prose-th-borders: var(--border-color); --tw-prose-td-borders: var(--border-color); }
+
+        .theme-green {
+            --bg-page: #f0fdf4; --bg-header: #dcfce7; --bg-editor: #FFFFFF; --bg-toolbar: #FFFFFF;
+            --bg-tooltip: #14532d; --text-primary: #14532d; --text-secondary: #4d7c0f;
+            --text-tooltip: #FFFFFF; --border-color: #bbf7d0; --accent-color: #22c55e;
+            --active-bg: #dcfce7; --active-text: #15803d;
+        }
+        .theme-blue {
+            --bg-page: #eff6ff; --bg-header: #dbeafe; --bg-editor: #FFFFFF; --bg-toolbar: #FFFFFF;
+            --bg-tooltip: #1e40af; --text-primary: #1e3a8a; --text-secondary: #1d4ed8;
+            --text-tooltip: #FFFFFF; --border-color: #bfdbfe; --accent-color: #3b82f6;
+            --active-bg: #dbeafe; --active-text: #1e40af;
+        }
+        .theme-pink {
+            --bg-page: #fdf2f8; --bg-header: #ffe4e6; --bg-editor: #ffffff; --bg-toolbar: #ffffff;
+            --bg-tooltip: #831843; --text-primary: #881337; --text-secondary: #be185d; 
+            --text-tooltip: #ffffff; --border-color: #fecdd3; --accent-color: #ec4899;
+            --active-bg: #fce7f3; --active-text: #9d174d;
+        }
+        body {
+            font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        header { background-color: var(--bg-header); border-color: var(--border-color); }
+        #editor {
+            background-color: var(--bg-editor);
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s, background-color 0.3s;
+            width: 8.5in;
+            min-height: 11in;
+            padding: 0.5in;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #editor:focus { outline: none; box-shadow: 0 0 0 2px var(--accent-color), 0 4px 12px rgba(0,0,0,0.1); }
+        .prose { color: var(--text-primary); max-width: none;}
+        .prose h1, .prose h2, .prose h3 { color: var(--text-primary); }
+        #editor h1 { font-size: 2.25rem; line-height: 2.5rem; font-weight: 700; }
+        #editor h2 { font-size: 1.875rem; line-height: 2.25rem; font-weight: 700; }
+        #editor h3 { font-size: 1.5rem; line-height: 2rem; font-weight: 700; }
+        #editor ul { list-style-type: disc; margin-left: 1.5rem; }
+        #editor ol { list-style-type: decimal; margin-left: 1.5rem; }
+        .katex-rendered { user-select: none; }
+        #editor img { max-width: 100%; height: auto; display: block; margin-left: auto; margin-right: auto; }
+        .toolbar-button.active { background-color: var(--active-bg); color: var(--active-text); }
+        .toolbar-container { background-color: var(--bg-toolbar); border-color: var(--border-color); }
+        #splash-screen { background-color: #ffffff; }
+        
+        @media print {
+            body, #editor-wrapper {
+                height: auto !important;
+                overflow: visible !important;
+            }
+            body { 
+                background-color: white !important; 
+                padding: 0; 
+                margin: 0; 
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            #editor-wrapper { 
+                padding: 0 !important; 
+            }
+            #editor {
+                visibility: visible !important; 
+                position: static;
+                width: 100%; 
+                border: none !important; 
+                box-shadow: none !important; 
+                height: auto; 
+                overflow: visible;
+                padding: 0.5in !important; 
+                margin: 0;
+            }
+        }
+        .tooltip { position: relative; display: inline-block; }
+        .tooltip .tooltiptext {
+            visibility: hidden; width: auto; white-space: nowrap; background-color: var(--bg-tooltip);
+            color: var(--text-tooltip); text-align: center; border-radius: 6px; padding: 5px 8px;
+            position: absolute; z-index: 50; bottom: 125%; left: 50%; transform: translateX(-50%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
+        <img src="icon.png" alt="LexiDraft Logo" class="w-auto h-96 mb-4 rounded-lg">
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div id="main-content" class="flex flex-col h-screen opacity-0 transition-opacity duration-500 ease-in-out">
+        
+        <header class="no-print w-full border-b p-2 print:hidden flex-shrink-0 sticky top-0 bg-white z-40" style="background-color: var(--bg-header);">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <img src="fullname.png" alt="LexiDraft Logo" class="h-12 w-auto rounded-md object-contain">
+                </div>
+            </div>
+
+            <div class="toolbar-container max-w-7xl mx-auto flex items-center flex-wrap gap-1.5 mt-2 p-1 rounded-lg border">
+                <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="open-docx"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg><span class="tooltiptext">Open .docx</span></button>
+                <input type="file" id="docx-input" class="hidden" accept=".docx">
+                <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="insert-image"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="tooltiptext">Insert Image</span></button>
+                <input type="file" id="image-input" class="hidden" accept="image/*">
+                <button id="print-button" class="toolbar-button tooltip p-2 rounded hover:bg-slate-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H7a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm2-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg><span class="tooltiptext">Print / PDF</span></button>
+                <div class="w-px h-6 bg-slate-300"></div>
+                
+                <select id="font-select" class="toolbar-button border-transparent rounded bg-transparent hover:bg-slate-200 p-2 text-sm focus:outline-none focus:ring-0" >
+                    <option value="Inter">Inter</option> <option value="Lato">Lato</option> <option value="Arial">Arial</option> <option value="Merriweather">Merriweather</option> <option value="Georgia">Georgia</option> <option value="Times New Roman">Times New Roman</option> <option value="Roboto Mono">Roboto Mono</option>
+                </select>
+                <select id="font-size-select" class="toolbar-button border-transparent rounded bg-transparent hover:bg-slate-200 p-2 text-sm focus:outline-none focus:ring-0">
+                    <option value="3">Normal</option> <option value="1">Small</option> <option value="2">Small</option> <option value="4">Large</option> <option value="5">Large</option> <option value="6">Huge</option> <option value="7">Huge</option>
+                </select>
+                <div class="w-px h-6 bg-slate-300"></div>
+                <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="bold"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path></svg><span class="tooltiptext">Bold</span></button>
+                <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="italic"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"></line><line x1="14" y1="20" x2="5" y2="20"></line><line x1="15" y1="4" x2="9" y2="20"></line></svg><span class="tooltiptext">Italic</span></button>
+                <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="underline"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path><line x1="4" y1="21" x2="20" y2="21"></line></svg><span class="tooltiptext">Underline</span></button>
+                <div class="w-px h-6 bg-slate-300"></div>
+                <select id="format-block-select" class="toolbar-button border-transparent rounded bg-transparent hover:bg-slate-200 p-2 text-sm focus:outline-none focus:ring-0"><option value="p">Normal Text</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option></select>
+                <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="insertUnorderedList"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg><span class="tooltiptext">Bullet List</span></button>
+                <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="insertOrderedList"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M11 6h9"></path><path d="M11 12h9"></path><path d="M11 18h9"></path><path d="M4 16a2 2 0 1 1 4 0c0 .591 -.5 1 -1 1.5l-3 2.5h4"></path><path d="M6 10v-6l-2 2"></path></svg><span class="tooltiptext">Numbered List</span></button>
+                <div class="w-px h-6 bg-slate-300"></div>
+                <div class="relative ml-auto" id="theme-dropdown">
+                    <button id="theme-dropdown-button" class="toolbar-button tooltip p-2 rounded hover:bg-slate-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg><span class="tooltiptext">Change Theme</span></button>
+                    <div id="theme-options" class="absolute right-0 top-full mt-2 w-36 bg-white rounded-md shadow-lg border border-slate-200 p-1 hidden" style="background-color: var(--bg-toolbar); border-color: var(--border-color);">
+                        <button class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-slate-100 flex items-center space-x-2" style="color: var(--text-primary);" data-theme="light"><span class="w-4 h-4 rounded-full border" style="background-color: var(--theme-light-swatch);"></span><span>Light</span></button>
+                        <button class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-slate-100 flex items-center space-x-2" style="color: var(--text-primary);" data-theme="dark"><span class="w-4 h-4 rounded-full border" style="background-color: var(--theme-dark-swatch);"></span><span>Dark</span></button>
+                        <button class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-slate-100 flex items-center space-x-2" style="color: var(--text-primary);" data-theme="green"><span class="w-4 h-4 rounded-full border" style="background-color: var(--theme-green-swatch);"></span><span>Green</span></button>
+                        <button class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-slate-100 flex items-center space-x-2" style="color: var(--text-primary);" data-theme="blue"><span class="w-4 h-4 rounded-full border" style="background-color: var(--theme-blue-swatch);"></span><span>Blue</span></button>
+                        <button class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-slate-100 flex items-center space-x-2" style="color: var(--text-primary);" data-theme="pink"><span class="w-4 h-4 rounded-full border" style="background-color: var(--theme-pink-swatch);"></span><span>Pink</span></button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main id="editor-wrapper" class="flex-1 overflow-y-auto p-4 md:py-8">
+            <div id="editor" contenteditable="true" class="prose rounded-lg">
+                <h1>Welcome to LexiDraft</h1>
+                <p>Start typing, paste your content, or import a .docx file using the toolbar. For math, just type LaTeX like $\alpha+\beta=\gamma$ and it will render automatically.</p>
+                <p>You can now use the new theme dropdown to customize your editor's appearance!</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Splash Screen Logic ---
+            const splashScreen = document.getElementById('splash-screen');
+            const mainContent = document.getElementById('main-content');
+
+            setTimeout(() => {
+                splashScreen.classList.add('opacity-0');
+                mainContent.classList.remove('opacity-0');
+
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                }, 500); // Match transition duration
+            }, 2500); // Splash screen duration
+
+            const editor = document.getElementById('editor');
+            let isKatexLoaded = false;
+
+            // --- Theme & Font Logic ---
+            const themeDropdown = document.getElementById('theme-dropdown');
+            const themeDropdownButton = document.getElementById('theme-dropdown-button');
+            const themeOptions = document.getElementById('theme-options');
+
+            themeDropdownButton.addEventListener('click', () => {
+                themeOptions.classList.toggle('hidden');
+            });
+            
+            themeOptions.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (button && button.dataset.theme) {
+                    const theme = button.dataset.theme;
+                    document.body.className = `theme-${theme}`;
+                    localStorage.setItem('editor-theme', theme);
+                    themeOptions.classList.add('hidden');
+                }
+            });
+
+            window.addEventListener('click', (e) => {
+                if (!themeDropdown.contains(e.target)) {
+                    themeOptions.classList.add('hidden');
+                }
+            });
+
+            const savedTheme = localStorage.getItem('editor-theme') || 'light';
+            document.body.classList.add(`theme-${savedTheme}`);
+
+            // --- Rich Text and Formatting Logic ---
+            document.getElementById('font-select').addEventListener('change', (e) => document.execCommand('fontName', false, e.target.value));
+            document.getElementById('font-size-select').addEventListener('change', (e) => document.execCommand('fontSize', false, e.target.value));
+
+            const docxInput = document.getElementById('docx-input');
+            const imageInput = document.getElementById('image-input');
+            const formatBlockSelect = document.getElementById('format-block-select');
+
+            document.querySelectorAll('.toolbar-button[data-command]').forEach(button => {
+                const command = button.dataset.command;
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (command === 'open-docx') docxInput.click();
+                    else if (command === 'insert-image') imageInput.click();
+                    else { document.execCommand(command, false, null); editor.focus(); }
+                });
+            });
+            
+            document.getElementById('print-button').addEventListener('click', () => window.print());
+            
+            formatBlockSelect.addEventListener('change', (e) => {
+                document.execCommand('formatBlock', false, e.target.value);
+                editor.focus();
+            });
+
+            docxInput.addEventListener('change', function(event) {
+                if (!window.mammoth || event.target.files.length === 0) return;
+                const reader = new FileReader();
+                reader.onload = (loadEvent) => {
+                    mammoth.convertToHtml({ arrayBuffer: loadEvent.target.result })
+                        .then(result => { editor.innerHTML = result.value; scanAndRenderAll(); })
+                        .catch(err => console.error("DOCX conversion error:", err));
+                };
+                reader.readAsArrayBuffer(event.target.files[0]);
+            });
+
+            imageInput.addEventListener('change', function(event) {
+                if (event.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => document.execCommand('insertHTML', false, `<p style="text-align: center;"><img src="${e.target.result}" style="max-width: 100%; height: auto; display: inline-block;"/></p>`);
+                    reader.readAsDataURL(event.target.files[0]);
+                }
+            });
+
+            const updateToolbar = () => {
+                 document.querySelectorAll('.toolbar-button[data-command]').forEach(button => {
+                    if (document.queryCommandState(button.dataset.command)) button.classList.add('active');
+                    else button.classList.remove('active');
+                });
+            };
+
+            // --- KaTeX Rendering Logic ---
+            const renderKatexInNode = (node) => {
+                if (!isKatexLoaded || !node || node.nodeType !== Node.TEXT_NODE) return;
+                const text = node.textContent;
+                const regex = /(\$\$[\s\S]*?\$\$)|(\$[^$]*?\$)/g;
+                let lastIndex = 0;
+                const fragments = document.createDocumentFragment();
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    if (match.index > lastIndex) fragments.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+                    const originalText = match[0];
+                    const isBlock = originalText.startsWith('$$');
+                    const latex = originalText.slice(isBlock ? 2 : 1, - (isBlock ? 2 : 1));
+                    if (latex.trim() !== '') {
+                        try {
+                            const span = document.createElement('span');
+                            span.contentEditable = 'false';
+                            span.setAttribute('data-latex', latex);
+                            window.katex.render(latex, span, { displayMode: isBlock, throwOnError: false });
+                            fragments.appendChild(span);
+                        } catch (e) { fragments.appendChild(document.createTextNode(originalText)); }
+                    } else { fragments.appendChild(document.createTextNode(originalText)); }
+                    lastIndex = match.index + originalText.length;
+                }
+                if (lastIndex < text.length) fragments.appendChild(document.createTextNode(text.substring(lastIndex)));
+                if (fragments.childNodes.length > 1 || (fragments.childNodes.length === 1 && fragments.firstChild.nodeType !== Node.TEXT_NODE)) {
+                    node.parentNode.replaceChild(fragments, node);
+                }
+            };
+            
+            const scanAndRenderAll = () => {
+                 if (!isKatexLoaded) return;
+                 const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+                 const nodesToProcess = [];
+                 while(walker.nextNode()) { if (!walker.currentNode.parentElement.closest('.katex')) { nodesToProcess.push(walker.currentNode); } }
+                 nodesToProcess.forEach(renderKatexInNode);
+            };
+            
+            // --- Event Listeners & Initialization ---
+            editor.addEventListener('input', () => {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) renderKatexInNode(selection.getRangeAt(0).startContainer);
+            });
+            editor.addEventListener('paste', (e) => setTimeout(scanAndRenderAll, 50));
+            document.addEventListener('selectionchange', updateToolbar);
+            
+            const katexCheckInterval = setInterval(() => {
+                if (window.katex) {
+                    isKatexLoaded = true;
+                    clearInterval(katexCheckInterval);
+                    scanAndRenderAll();
+                }
+            }, 100);
+        });
+    </script>
+
+</body>
+</html>
+
