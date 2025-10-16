@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LexiDraft Scientific Editor</title>
-    <link rel="icon" href="https://raw.githubusercontent.com/google-gemini/cookbook/main/py/apps/images/LexiDraft_icon.png" type="image/x-icon">
+    <link rel="icon" href="logo512.png" type="image/x-icon">
     
     <!-- Google Fonts: Inter, Lato, Merriweather, Roboto Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,6 +72,7 @@
         body {
             font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-primary);
             transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden; /* Prevents horizontal scrolling on small screens */
         }
         header { background-color: var(--bg-header); border-color: var(--border-color); }
         #editor {
@@ -151,7 +152,7 @@
     <!-- Splash Screen -->
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
         <!-- RESPONSIVE CHANGE: Adjusted logo size for small screens -->
-        <img src="icon.png" alt="LexiDraft Logo" class="h-96 mb-4 rounded-lg">
+        <img src="icon.png" alt="LexiDraft Logo" class="h-64 sm:h-96 mb-4 rounded-lg">
     </div>
 
     <!-- Main Content Wrapper -->
@@ -371,3 +372,4 @@
 
 </body>
 </html>
+
