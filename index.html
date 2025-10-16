@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LexiDraft Scientific Editor</title>
-    <link rel="icon" href="logo512.png" type="image/x-icon">
+    <link rel="icon" href="https://raw.githubusercontent.com/google-gemini/cookbook/main/py/apps/images/LexiDraft_icon.png" type="image/x-icon">
     
     <!-- Google Fonts: Inter, Lato, Merriweather, Roboto Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +14,7 @@
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- KaTeX for LaTeX rendering - CRITICAL FIX: Corrected integrity attribute -->
+    <!-- KaTeX for LaTeX rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMmg9ikOAldyd3pCzoMmbJsyxxjiZLqtpFyABhWrao+euMSRp" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
     
@@ -22,21 +22,19 @@
     <script src="https://unpkg.com/mammoth@1.5.1/mammoth.browser.min.js"></script>
     
     <style>
-        /* Add these new rules */
-            #font-select,
-            #font-size-select,
-            #format-block-select {
-                color: var(--text-primary);
-            }
+        #font-select,
+        #font-size-select,
+        #format-block-select {
+            color: var(--text-primary);
+        }
 
-            #font-select option,
-            #font-size-select option,
-            #format-block-select option {
-                color: #1e293b; /* Dark text color for readability */
-                background-color: #FFFFFF; /* Light background for the dropdown */
-            }
+        #font-select option,
+        #font-size-select option,
+        #format-block-select option {
+            color: #1e293b; /* Dark text color for readability */
+            background-color: #FFFFFF; /* Light background for the dropdown */
+        }
 
-            /* ... existing styles ... */
         :root {
             --bg-page: #F1F5F9; --bg-header: #FFFFFF; --bg-editor: #FFFFFF; --bg-toolbar: #FFFFFF;
             --bg-tooltip: #1e293b; --text-primary: #1e293b; --text-secondary: #64748b;
@@ -51,7 +49,6 @@
             --text-tooltip: #121212; --border-color: #383838; --accent-color: #BB86FC;
             --active-bg: #333333; --active-text: #BB86FC;
         }
-        /* FIX: Added specific text color overrides for dark mode prose */
         .theme-dark .prose { --tw-prose-body: var(--text-primary); --tw-prose-headings: var(--text-primary); --tw-prose-lead: var(--text-secondary); --tw-prose-links: var(--accent-color); --tw-prose-bold: var(--text-primary); --tw-prose-counters: var(--text-secondary); --tw-prose-bullets: var(--border-color); --tw-prose-hr: var(--border-color); --tw-prose-quotes: var(--text-primary); --tw-prose-quote-borders: var(--border-color); --tw-prose-captions: var(--text-secondary); --tw-prose-code: var(--text-primary); --tw-prose-pre-code: var(--text-primary); --tw-prose-pre-bg: #282828; --tw-prose-th-borders: var(--border-color); --tw-prose-td-borders: var(--border-color); }
 
         .theme-green {
@@ -81,9 +78,12 @@
             background-color: var(--bg-editor);
             box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.1);
             transition: box-shadow 0.2s, background-color 0.3s;
-            width: 8.5in;
+            /* RESPONSIVE CHANGE: Use 100% width up to a max of 8.5in */
+            width: 100%;
+            max-width: 8.5in;
             min-height: 11in;
-            padding: 0.5in;
+            /* RESPONSIVE CHANGE: Adjust padding for smaller screens */
+            padding: 1rem;
             margin-left: auto;
             margin-right: auto;
         }
@@ -100,6 +100,13 @@
         .toolbar-button.active { background-color: var(--active-bg); color: var(--active-text); }
         .toolbar-container { background-color: var(--bg-toolbar); border-color: var(--border-color); }
         #splash-screen { background-color: #ffffff; }
+        
+        /* RESPONSIVE CHANGE: Restore larger padding on medium screens and up */
+        @media (min-width: 768px) {
+            #editor {
+                padding: 0.5in;
+            }
+        }
         
         @media print {
             body, #editor-wrapper {
@@ -143,6 +150,7 @@
 
     <!-- Splash Screen -->
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
+        <!-- RESPONSIVE CHANGE: Adjusted logo size for small screens -->
         <img src="icon.png" alt="LexiDraft Logo" class="w-auto h-96 mb-4 rounded-lg">
     </div>
 
@@ -152,10 +160,12 @@
         <header class="no-print w-full border-b p-2 print:hidden flex-shrink-0 sticky top-0 bg-white z-40" style="background-color: var(--bg-header);">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                    <img src="fullname.png" alt="LexiDraft Logo" class="h-12 w-auto rounded-md object-contain">
+                    <!-- RESPONSIVE CHANGE: Adjusted logo size for small screens -->
+                    <img src="fullname.png" alt="LexiDraft Logo" class="h-10 sm:h-12 w-auto rounded-md object-contain">
                 </div>
             </div>
 
+            <!-- Toolbar now wraps buttons on smaller screens -->
             <div class="toolbar-container max-w-7xl mx-auto flex items-center flex-wrap gap-1.5 mt-2 p-1 rounded-lg border">
                 <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="open-docx"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg><span class="tooltiptext">Open .docx</span></button>
                 <input type="file" id="docx-input" class="hidden" accept=".docx">
@@ -179,6 +189,7 @@
                 <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="insertUnorderedList"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg><span class="tooltiptext">Bullet List</span></button>
                 <button class="toolbar-button tooltip p-2 rounded hover:bg-slate-200" data-command="insertOrderedList"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M11 6h9"></path><path d="M11 12h9"></path><path d="M11 18h9"></path><path d="M4 16a2 2 0 1 1 4 0c0 .591 -.5 1 -1 1.5l-3 2.5h4"></path><path d="M6 10v-6l-2 2"></path></svg><span class="tooltiptext">Numbered List</span></button>
                 <div class="w-px h-6 bg-slate-300"></div>
+                <!-- The ml-auto on this container pushes it to the far right on larger screens -->
                 <div class="relative ml-auto" id="theme-dropdown">
                     <button id="theme-dropdown-button" class="toolbar-button tooltip p-2 rounded hover:bg-slate-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg><span class="tooltiptext">Change Theme</span></button>
                     <div id="theme-options" class="absolute right-0 top-full mt-2 w-36 bg-white rounded-md shadow-lg border border-slate-200 p-1 hidden" style="background-color: var(--bg-toolbar); border-color: var(--border-color);">
@@ -232,7 +243,9 @@
                 const button = e.target.closest('button');
                 if (button && button.dataset.theme) {
                     const theme = button.dataset.theme;
-                    document.body.className = `theme-${theme}`;
+                    // Remove all theme classes before adding the new one
+                    document.body.className = '';
+                    document.body.classList.add(`theme-${theme}`);
                     localStorage.setItem('editor-theme', theme);
                     themeOptions.classList.add('hidden');
                 }
@@ -293,9 +306,11 @@
 
             const updateToolbar = () => {
                  document.querySelectorAll('.toolbar-button[data-command]').forEach(button => {
-                    if (document.queryCommandState(button.dataset.command)) button.classList.add('active');
-                    else button.classList.remove('active');
-                });
+                     try {
+                        if (document.queryCommandState(button.dataset.command)) button.classList.add('active');
+                        else button.classList.remove('active');
+                     } catch(e) { /* Squelch forbidden command errors */ }
+                 });
             };
 
             // --- KaTeX Rendering Logic ---
@@ -356,4 +371,3 @@
 
 </body>
 </html>
-
