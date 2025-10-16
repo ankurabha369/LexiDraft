@@ -14,7 +14,7 @@
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- KaTeX for LaTeX rendering - CRITICAL FIX: Corrected integrity attribute and added defer -->
+    <!-- KaTeX for LaTeX rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMmg9ikOAldyd3pCzoMmbJsyxxjiZLqtpFyABhWrao+euMSRp" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
     
@@ -152,7 +152,7 @@
 
     <!-- Splash Screen -->
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
-        <img src="icon.png" alt="LexiDraft Logo" class="h-96 mb-4">
+        <img src="icon.png" alt="LexiDraft Logo" class="w-auto h-64 sm:h-96 mb-4 rounded-lg">
     </div>
 
     <!-- Main Content Wrapper -->
@@ -261,8 +261,49 @@
             document.body.classList.add(`theme-${savedTheme}`);
 
             // --- Rich Text and Formatting Logic ---
+            const fontSizeMap = {
+                '1': '0.75rem',
+                '2': '0.875rem',
+                '3': '1rem',
+                '4': '1.25rem',
+                '5': '1.5rem',
+                '6': '1.875rem',
+                '7': '2.25rem'
+            };
+
             document.getElementById('font-select').addEventListener('change', (e) => document.execCommand('fontName', false, e.target.value));
-            document.getElementById('font-size-select').addEventListener('change', (e) => document.execCommand('fontSize', false, e.target.value));
+            
+            document.getElementById('font-size-select').addEventListener('change', (e) => {
+                const sizeValue = e.target.value;
+                
+                // 1. Apply size to normal text using the old method
+                document.execCommand('fontSize', false, sizeValue);
+
+                // 2. Apply size to selected KaTeX elements
+                const newFontSize = fontSizeMap[sizeValue];
+                if (!newFontSize) return;
+
+                const selection = window.getSelection();
+                if (!selection.rangeCount || selection.isCollapsed) return;
+
+                const range = selection.getRangeAt(0);
+                const ancestor = range.commonAncestorContainer;
+                
+                const parentElement = ancestor.nodeType === Node.ELEMENT_NODE ? ancestor : ancestor.parentElement;
+                if (!parentElement) return;
+
+                const allKatexInAncestor = parentElement.querySelectorAll('.katex');
+
+                allKatexInAncestor.forEach(el => {
+                    // Check if the element is fully or partially within the user's selection
+                    if (selection.containsNode(el, true)) {
+                        el.style.fontSize = newFontSize;
+                    }
+                });
+
+                editor.focus();
+            });
+
 
             const docxInput = document.getElementById('docx-input');
             const imageInput = document.getElementById('image-input');
